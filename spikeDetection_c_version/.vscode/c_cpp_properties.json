@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "D:/mingw_w64/mingw64/lib/gcc/x86_64-w64-mingw32/8.1.0/include",
+                "D:/mingw_w64/mingw64/include",
+                "D:Study/DegreeProject/Codes/spikeDetection_c_version/utils",
+                "D:Study/DegreeProject/Codes/spikeDetection_c_version/functions"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}

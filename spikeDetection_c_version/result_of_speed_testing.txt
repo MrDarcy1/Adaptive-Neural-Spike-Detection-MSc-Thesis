@@ -1,0 +1,25 @@
+4e4 data points
+
+filtering: 1e5 iterations: 26.6s
+
+NEO: 8e5 iterations: 27.7s
+ASO: 8e5 iterations: 27.9s
+
+thresholding 1000 iterations
+
+update freq: 1    27.6s
+update freq: 100  28.4s
+update freq: 1000 27.6s
+
+
+The results are not quite as expected.
+
+First of all, ASO and NEO takes similar time for running. It could result from the way instructions are compiled.
+
+Also, increasing update freqeuncy do not reduce the running time. That could because of the logic of the program or there is a bottleneck.
+
+
+In addition, increasing the update frequency does not effect much about the accuracy, and sometimes it can even be improved, 
+even if it is only updated everytime when a spike is detected. 
+
+
