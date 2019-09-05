@@ -1,0 +1,30 @@
+function  plotNoise(spike_location,data,noise_data,noise,SNR,x,y,fig,names,save)   
+    if save == 1
+        folder='./plotNew/';
+        figure(fig)
+        subplot(3,1,1)
+        plotSpikes(spike_location,data)
+        title(names{1})
+        xlabel('Time Steps')
+        ylabel('Amplitude')
+        ylim(y)
+        xlim(x)
+        subplot(3,1,2)
+        plotSpikes(spike_location,noise_data)
+        xlim(x)
+        ylim(y)
+        title(['Signal with Noise'])
+        xlabel('Time Steps')
+        ylabel('Amplitude')
+        subplot(3,1,3)
+        plot(noise)
+        xlim(x)
+        ylim(y)
+        title(['Background Activity - SNR: ',num2str(SNR),'dB'])
+        xlabel('Time Steps')
+        ylabel('Amplitude')
+        saveas(fig,[folder,names{2},'.jpg'])
+        saveas(fig,[folder,names{2},'.fig'])
+    end
+end
+
