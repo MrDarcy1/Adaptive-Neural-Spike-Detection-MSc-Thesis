@@ -1,7 +1,7 @@
 # Adaptive Neural Spike Detection-MSc Thesis
  MSc Thesis Codes
 
-c_version: is not the newest implementation
+c_version:  Not the newest implementation
 
 matlab_version: fixedPointImplementation.m & floatpoint.m.  Newest
 
