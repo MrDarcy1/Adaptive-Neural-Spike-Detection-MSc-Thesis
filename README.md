@@ -12,3 +12,4 @@ Data: realDataWithLFP_4.mat & realDataWithLFP_5.mat can be found on
 
 https://drive.google.com/drive/folders/1FAS7Q7n7dvwI7Vwvo4fPHcM9A_0EcwBJ?usp=sharing
 
+Plots updated
