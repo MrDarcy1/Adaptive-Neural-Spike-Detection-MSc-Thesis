@@ -63,6 +63,7 @@ fs=24414;
 countFreq = 1000;
 updateFreq = 15000;
 c = 24;
+init_c = 15
 %out
 ASO = [];
 THR1 = [];
@@ -123,9 +124,7 @@ for i = 1:thr_buffer_length
     else
         mean_buffer_end = mean_buffer_end + 1;
     end
-%     demean = data(i);
     aso = abs(demean*(demean-preprevious_demean)/2^7);
-%     aso = abs(demean^2 - previous_demean * (data(i+17)-mean_buffer_mean)/2^7) ;
 
     ppreprevious_demean = preprevious_demean;
     preprevious_demean=previous_demean;
@@ -134,12 +133,14 @@ for i = 1:thr_buffer_length
     thr_buffer(thr_buffer_end) = aso;
     thr_buffer_end = thr_buffer_end + 1;
 end
-threshold = 15*median(thr_buffer);
+threshold = init_c*median(thr_buffer);
 sampleNum = N-2;
 % processing
 for i = 1:sampleNum
+
     temp = mean_buffer(mean_buffer_end);
     mean_buffer(mean_buffer_end) = data(i);
+	%mean update
     if (count == countFreq)
         count = 0;
         mean_buffer_mean = (mean(mean_buffer));
@@ -147,27 +148,24 @@ for i = 1:sampleNum
         mean_buffer_mean = (mean_buffer_mean - ((temp - mean_buffer(mean_buffer_end))/16));
         count = count + 1;
     end
+	%mean subtraction
     demean = abs(mean_buffer(mean_buffer_end) - mean_buffer_mean);
-% demean = data(i);
     if mean_buffer_end == mean_buffer_length
         mean_buffer_end = 1;
     else
         mean_buffer_end = mean_buffer_end + 1;
     end
+	%aso
     aso = abs(demean*(demean-preprevious_demean)/2^7);
     
-%     aso = abs(demean^2 - preprevious_demean * (data(i+2)-mean_buffer_mean)/2^7) ;
     ppreprevious_demean = preprevious_demean;
     preprevious_demean=previous_demean;
     previous_demean = demean;
     
+	%thresholding
     if(detected == detected_time)
         if(aso>threshold) %detection
-%             if i+after<sampleNum
-%                 [~,idx]=max(aso(i:i+after));
-%             else %last few data points
-%                 [~,idx]=max(aso(i:sampleNum));
-%             end
+
             spikes_detected=[spikes_detected i]; %record spike location
             interval=[interval;[i,i+after]]; % record spike interval
             detected = 0;
@@ -178,7 +176,7 @@ for i = 1:sampleNum
 
             update = update + 1;
         elseif (adding < thr_buffer_length)
-            if(aso<=threshold / 2)
+            if(aso<=threshold / 2) %sub thresholding
                 DATA_FOR_THR = [DATA_FOR_THR, aso];
                 Sum = Sum + aso;
                 adding = adding + 1;
@@ -189,7 +187,7 @@ for i = 1:sampleNum
             if(aso <= threshold / 2)
                 DATA_FOR_THR = [DATA_FOR_THR, aso];
                 Sum = Sum + aso;
-                threshold = (Sum*c/thr_buffer_length);
+                threshold = (Sum*c/thr_buffer_length); %update
                 Sum = 0;
                 adding = 0;
                 update = 0;

@@ -32,8 +32,8 @@ cells=3;
 % [noise_data,noise,backgroundActNum,backgroundActLoc] = addNoisePossion(data,noise_base,SNR,lambda,cells,fs);
 %     data = noise_data/100;
 % %     data=1e4*double(data(1:N));
-%     fid=fopen(['noise_data.txt'],'wt'); %写的方式打开文件（若不存在，建立文件）；
-%     fprintf(fid,'%f\n',data);  % %d 表示以整数形式写入数据，这正是我想要的；
+%     fid=fopen(['noise_data.txt'],'wt'); 
+%     fprintf(fid,'%f\n',data);  % 
 % figure(1)
 % subplot(3,1,1)
 % plotSpikes(spike_location,data)
@@ -145,6 +145,7 @@ sampleNum = N;
 for i = 1:sampleNum
     temp = mean_buffer(mean_buffer_end);
     mean_buffer(mean_buffer_end) = data(i);
+	%mean update
     if (count == countFreq)
         count = 0;
         mean_buffer_mean = round(mean(mean_buffer));
@@ -152,18 +153,20 @@ for i = 1:sampleNum
         mean_buffer_mean = (mean_buffer_mean - round((temp - mean_buffer(mean_buffer_end))/16));
         count = count + 1;
     end
+	%mean subtraction
     demean = mean_buffer(mean_buffer_end) - mean_buffer_mean;
     if mean_buffer_end == mean_buffer_length
         mean_buffer_end = 1;
     else
         mean_buffer_end = mean_buffer_end + 1;
     end
+	%aso
     aso = round(pow2(nextpow2(demean)-1)*abs(demean-preprevious_demean)/2^7);
     
     ppreprevious_demean = preprevious_demean;
     preprevious_demean=previous_demean;
     previous_demean = demean;
-    
+    %thresholding
     if(detected == detected_time)
         if(aso>threshold) %detection
 
@@ -175,14 +178,14 @@ for i = 1:sampleNum
         if (update < update_time)
             update = update + 1;
         elseif (adding < thr_buffer_length)
-            if(aso<=threshold / 2)
+            if(aso<=threshold / 2) %sub thresholding
                 Sum = Sum + aso;
                 adding = adding + 1;
             end
         else
             if(aso <= threshold / 2)
                 Sum = Sum + aso;
-                threshold = round(Sum*c/thr_buffer_length);
+                threshold = round(Sum*c/thr_buffer_length); %threshold updating
                 Sum = 0;
                 adding = 0;
                 update = 0;
