@@ -52,7 +52,7 @@ function [noise_data,noise,numArrival,toa] = addNoisePossion(data,noise_base,SNR
         delta = (SNRstart-SNRend)/length(data);
 
 %         noise_power=signal_power./(10.^([SNRstart:-delta:SNRend+delta]/10))';
-        noise_power=signal_power./(10.^(SNR/10))';
+        noise_power=signal_power./(10.^(SNR/10));
 % 
         noise=sqrt(noise_power).*noise;
         noise_data=data+noise;

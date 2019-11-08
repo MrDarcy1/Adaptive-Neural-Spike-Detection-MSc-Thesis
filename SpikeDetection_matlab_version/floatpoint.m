@@ -1,5 +1,6 @@
-% parameters to test. updatefreq, countFreq, parameters, sampling level,
-% sampling freq
+% Important parameters: c, c_init, updateFreq
+% 100000 samples are taken. ~4s. 
+%%
 
 addpath('./data')
 addpath('./functions')
@@ -8,7 +9,7 @@ addpath('./utils')
 %% Load Data
 load('realDataWithLFP_3.mat')
 load('spike_location_3.mat')
-N=25000;
+N=100000;
 data=1e7*data(1:N);
 % [b,a] = butter(2,300/3500,'high');
 % data = filter(b,a,data);
@@ -31,8 +32,8 @@ fs=24414;
 % % [noise_data,noise,backgroundActNum,backgroundActLoc] = addNoisePossion(data,noise_base,SNR,lambda,cells,fs);
 % %     data = noise_data/100;
 % % %     data=1e4*double(data(1:N));
-% %     fid=fopen(['noise_data.txt'],'wt'); %写的方式打开文件（若不存在，建立文件）；
-% %     fprintf(fid,'%f\n',data);  % %d 表示以整数形式写入数据，这正是我想要的；
+% %     fid=fopen(['noise_data.txt'],'wt');
+% %     fprintf(fid,'%f\n',data);  
 % figure(1)
 % subplot(3,1,1)
 % plotSpikes(spike_location,data)
@@ -56,22 +57,12 @@ fs=24414;
 % xlabel('Time Steps')
 % ylabel('Amplitude')
 %% Main
-% Data = data;
-l=1
-% for SNR = -5:0.5:5
-%     [noise_data,noise,backgroundActNum,backgroundActLoc] = addNoisePossion(Data,noise_base,SNR,lambda,cells,fs);
-%     [noise_data,noise] = addNoise(Data,SNR, -5);
-% 
- data = [noise_data];
-% for countFreq = [100:100:900, 1000:1000:10000]
-%     j = 1;
-%     for updateFreq = [100:100:900, 1000:1000:10000]
-%         k = 1;
-%         for c = 20:35
+% data = noise_data;
+
 
 countFreq = 1000;
-updateFreq = 5000;
-c= 32;
+updateFreq = 15000;
+c = 24;
 %out
 ASO = [];
 THR1 = [];
@@ -133,7 +124,7 @@ for i = 1:thr_buffer_length
         mean_buffer_end = mean_buffer_end + 1;
     end
 %     demean = data(i);
-    aso = (pow2(nextpow2(demean)-1)*abs(demean-preprevious_demean)/2^7);
+    aso = abs(demean*(demean-preprevious_demean)/2^7);
 %     aso = abs(demean^2 - previous_demean * (data(i+17)-mean_buffer_mean)/2^7) ;
 
     ppreprevious_demean = preprevious_demean;
@@ -143,10 +134,8 @@ for i = 1:thr_buffer_length
     thr_buffer(thr_buffer_end) = aso;
     thr_buffer_end = thr_buffer_end + 1;
 end
-threshold = 12*median(thr_buffer);
+threshold = 15*median(thr_buffer);
 sampleNum = N-2;
-
-
 % processing
 for i = 1:sampleNum
     temp = mean_buffer(mean_buffer_end);
@@ -165,7 +154,7 @@ for i = 1:sampleNum
     else
         mean_buffer_end = mean_buffer_end + 1;
     end
-    aso = (pow2(nextpow2(demean)-1)*abs(demean-preprevious_demean)/2^7);
+    aso = abs(demean*(demean-preprevious_demean)/2^7);
     
 %     aso = abs(demean^2 - preprevious_demean * (data(i+2)-mean_buffer_mean)/2^7) ;
     ppreprevious_demean = preprevious_demean;
@@ -189,7 +178,7 @@ for i = 1:sampleNum
 
             update = update + 1;
         elseif (adding < thr_buffer_length)
-            if(aso<=threshold / 3)
+            if(aso<=threshold / 2)
                 DATA_FOR_THR = [DATA_FOR_THR, aso];
                 Sum = Sum + aso;
                 adding = adding + 1;
@@ -197,10 +186,10 @@ for i = 1:sampleNum
         else
              
 
-            if(aso <= threshold / 3)
+            if(aso <= threshold / 2)
                 DATA_FOR_THR = [DATA_FOR_THR, aso];
                 Sum = Sum + aso;
-                threshold = 1613;%(Sum*c/thr_buffer_length);
+                threshold = (Sum*c/thr_buffer_length);
                 Sum = 0;
                 adding = 0;
                 update = 0;
@@ -212,53 +201,6 @@ for i = 1:sampleNum
         detected = detected + 1;
         update = update + 1;
     end
-%     
-%     if(detected == detected_time)
-%         if(aso <= threshold) %not detected
-%             if(aso > round(threshold / 2))
-%                 hold_data = 0;
-%             end
-%             if(update == update_time && hold_data == hold_time )
-%                 update = 0;
-%                 threshold = c*thr_buffer_mean;
-%             else
-%                 if (update ~= update_time)
-%                     update = update + 1;
-%                 end
-%                 if(hold_data ~= hold_time)
-%                     hold_data = hold_data+1;     
-%                 end
-%             end
-%         else %detected
-%             if i+after<sampleNum
-%                 [~,idx]=max(data(i:i+after));
-%             else %last few data points
-%                 [~,idx]=max(data(i:sampleNum));
-%             end
-%             spikes_detected=[spikes_detected i+idx-1]; %record spike location
-%             interval=[interval;[i,i+after]]; % record spike interval
-%             detected = 0;
-%             hold_data = 0;
-%             update = update_time;
-%         end
-%     else
-%         detected = detected + 1;
-%         hold_data = hold_data + 1;
-%     end
-%     if(hold_data == hold_time)
-%         thr_buffer_mean = abs(round((thr_buffer_mean*64-thr_buffer(thr_buffer_end)+abs(aso))/64));
-%         thr_buffer(thr_buffer_end) = aso;
-%     else
-%         temp = thr_buffer_mean;
-%         thr_buffer_mean = abs(round((thr_buffer_mean*64-thr_buffer(thr_buffer_end)+thr_buffer_mean)/64));
-%         thr_buffer(thr_buffer_end) = temp;
-% 
-%     end
-%     if (thr_buffer_end == thr_buffer_length)
-%         thr_buffer_end = 1;
-%     else
-%         thr_buffer_end = thr_buffer_end + 1;
-%     end
     MEAN = [MEAN, mean_buffer_mean];
     DEMEAN = [ DEMEAN, demean];
     ASO = [ASO, aso];
@@ -277,21 +219,21 @@ end
 
 
 % 
-% figure(2)
+% figure(10)
 % plotSpikes(spikes_detected,ASO);hold on
-% plot(0:1/fs:(length(ASO)-1)/fs,ASO,'Color','g','LineWidth',0.5);hold on
-% plot(0:1/fs:(length(THR1)-1)/fs,THR1,'Color','b','LineWidth',0.5);hold off
-% plot(0:1/fs:(length(THR)-1)/fs,THR,'Color','r','LineWidth',0.5);hold off
+% plot(0:1/fs:(length(ASO)-1)/fs,ASO);hold on
+% plot(0:1/fs:(length(THR1)-1)/fs,THR1);hold off
+% plot(0:1/fs:(length(THR)-1)/fs,THR);hold off
 % xlim([0,(length(THR)-1)/fs])
 % xlabel('Time/s')
-% legend('ASO Processed Data','Threshold ')%,'Spike Eliminated and Sub-thresholded Threshold')
+% legend('ASO Processed Data','Threshold ','Spike Eliminated and Sub-thresholded Threshold')
 % title('Thresholds')
 
 % figure(3);
 % plot(data);hold on
 % plot(MEAN(8:end));hold off;
 % 
-figure(4)
+% figure(4)
 % subplot(4,1,1)
 % plotSpikes(spike_location,data);
 % legend('Intracellular Signal','Spike Locations')
@@ -314,28 +256,28 @@ figure(4)
 % title('Spike Emphasised Signal')
 % 
 % subplot(4,1,4)
-plotSpikes(spikes_detected,ASO);hold on
-plot(0:1/fs:(length(THR1)-1)/fs,THR1,'Color','r','LineWidth',1);hold off
-xlim([0,(length(THR1)-1)/fs])
-xlabel('Time/s')
-legend('Emphasised Signal','Detected Spikes','Threshold')%,'Spike Eliminated and Sub-thresholded Threshold')
-title('Statistic Threshold')
+% plotSpikes(spikes_detected,ASO);hold on
+% plot(0:1/fs:(length(THR1)-1)/fs,THR1,'Color','r','LineWidth',1);hold off
+% xlim([0,(length(THR1)-1)/fs])
+% xlabel('Time/s')
+% legend('Emphasised Signal','Detected Spikes','Threshold')%,'Spike Eliminated and Sub-thresholded Threshold')
+% title('Statistic Threshold')
 
 [FP,FN,TP]=locationCompare(spike_location,interval,spikes_detected);
 
 % Sens(l)= length(TP)/(length(TP)+length(FN)) % found is correct
 % FDR(l) = length(FP)/(length(FP)+length(TP))% not find
 % Acc(l) = length(TP)/(length(TP)+length(FN)+length(FP))
-Sen= length(TP)/(length(TP)+length(FN)) % found is correct
-FD = length(FP)/(length(FP)+length(TP))% not find
-Ac = length(TP)/(length(TP)+length(FN)+length(FP))
+Sens= length(TP)/(length(TP)+length(FN)) % found is correct
+FDR = length(FP)/(length(FP)+length(TP))% not find
+Acc = length(TP)/(length(TP)+length(FN)+length(FP))
 % Sens(l,j,k)
 % FDR(l,j,k)
 % Acc(l,j,k)
 %     k = k + 1
 % 
 % figure(5)
-% visualisation(ASO,THR1,FP,FN,TP,0)
+visualisation(ASO,THR1,FP,FN,TP,0)
 % xlim([0,(length(THR1)-1)/fs])
 
 %         end
@@ -345,4 +287,10 @@ Ac = length(TP)/(length(TP)+length(FN)+length(FP))
 % end
 % figure(5)
 % 
+%%
+% for i = 1:67
+% plot(interval(i,1):interval(i,2),ASO(interval(i,1):interval(i,2)),'Color',COLORS(1,:))
+% hold on
+% end
+% hold off
 

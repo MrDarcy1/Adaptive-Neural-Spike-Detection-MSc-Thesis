@@ -1,6 +1,6 @@
-% parameters to test. updatefreq, countFreq, parameters, sampling level,
-% sampling freq
-
+% Important parameters: c, c_init, updateFreq
+% 100000 samples are taken. ~4s. 
+%%
 addpath('./data')
 addpath('./functions')
 addpath('./utils')
@@ -8,18 +8,18 @@ addpath('./utils')
 %% Load Data
 % data = signal;
 % spike_location = corrSpikes;
-load('realDataWithLFP_1.mat')
-load('spike_location_1.mat')
-N=10000;
-% data=round((1e7/(4))*data(1:N));
-data = data(1:N);
-% data = data(1:N);
-figure(2)
+load('realDataWithLFP_3.mat')
+load('spike_location_3.mat')
+N=100000;
+data=round((1e7/(4))*data(1:N));
 spike_location=spike_location(spike_location<=N);
-plotSpikes(spike_location,data)
-legend('Introcellalur Recording','WaveClus Detected Spikes')
-xlabel('Time/s')
-ylabel('Amplitude')
+
+
+% figure(2)
+% plotSpikes(spike_location,data)
+% legend('Introcellalur Recording','WaveClus Detected Spikes')
+% xlabel('Time/s')
+% ylabel('Amplitude')
 % spike_location=spike_location(spike_location>N)-N;
 fs=24414;
 %% Add Noise
@@ -42,44 +42,33 @@ cells=3;
 % ylabel('Amplitude')
 % % ylim([-3e-4,6e-4])
 % xlim([1,5000])
-subplot(2,1,1)
-plotSpikes(spike_location,noise_data)
-ylim([-0.4e-3,0.6e-3]);
+% subplot(2,1,1)
+% plotSpikes(spike_location,noise_data)
+% ylim([-0.4e-3,0.6e-3]);
 % xlim([1,5000])
 % % ylim([-3e-4,6e-4])
-title('Signal with 5dB Gaussian Noise')
-xlabel('Time/s')
-ylabel('Amplitude')
-subplot(2,1,2)
-plot(0:1/fs:(N-1)/fs,noise)
-xlim([0,N/fs])
+% title('Signal with 5dB Gaussian Noise')
+% xlabel('Time/s')
+% ylabel('Amplitude')
+% subplot(2,1,2)
+% plot(0:1/fs:(N-1)/fs,noise)
+% xlim([0,N/fs])
 % ylim([-3e-4,6e-4])
-title(['White Gaussian Noise - SNR: ',num2str(SNR),'dB'])
-xlabel('Time/s')
-ylabel('Amplitude')
-ylim([-0.5e-3,0.5e-3]);
+% title(['White Gaussian Noise - SNR: ',num2str(SNR),'dB'])
+% xlabel('Time/s')
+% ylabel('Amplitude')
+% ylim([-0.5e-3,0.5e-3]);
 
 %% Main
 
 
-data = round(noise_data);
-% Data = data;
-% l = 1;
-% l = 22;
-% for SNR = 1:0.5:20
-%     [noise_data,noise,backgroundActNum,backgroundActLoc] = addNoisePossion(Data,noise_base,SNR,lambda,cells,fs);
-%     [noise_data,noise] = addNoise(Data,noise_base,SNR, 0);
-% 
-%     data = noise_data;
-% for countFreq = [100:100:900, 1000:1000:10000]
-%     j = 1;
-%     for updateFreq = [100:100:900, 1000:1000:10000]
-%         k = 1;
-%         for c = 20:35
+% data = round(noise_data);
+
 
 countFreq = 1000;
 updateFreq = 15000;
-c= 30;
+c= 24;
+c_init = 8;
 %out
 ASO = [];
 THR = [];
@@ -148,7 +137,7 @@ for i = 1:thr_buffer_length
     thr_buffer(thr_buffer_end) = aso;
     thr_buffer_end = thr_buffer_end + 1;
 end
-threshold = 10*median(thr_buffer);
+threshold = c_init*median(thr_buffer);
 sampleNum = N;
 
 
@@ -177,11 +166,7 @@ for i = 1:sampleNum
     
     if(detected == detected_time)
         if(aso>threshold) %detection
-%             if i+after<sampleNum
-%                 [~,idx]=max(aso(i:i+after));
-%             else %last few data points
-%                 [~,idx]=max(aso(i:sampleNum));
-%             end
+
             spikes_detected=[spikes_detected i]; %record spike location
             interval=[interval;[i,i+after]]; % record spike interval
             detected = 0;
@@ -207,53 +192,6 @@ for i = 1:sampleNum
         detected = detected + 1;
         update = update + 1;
     end
-%     
-%     if(detected == detected_time)
-%         if(aso <= threshold) %not detected
-%             if(aso > round(threshold / 2))
-%                 hold_data = 0;
-%             end
-%             if(update == update_time && hold_data == hold_time )
-%                 update = 0;
-%                 threshold = c*thr_buffer_mean;
-%             else
-%                 if (update ~= update_time)
-%                     update = update + 1;
-%                 end
-%                 if(hold_data ~= hold_time)
-%                     hold_data = hold_data+1;     
-%                 end
-%             end
-%         else %detected
-%             if i+after<sampleNum
-%                 [~,idx]=max(data(i:i+after));
-%             else %last few data points
-%                 [~,idx]=max(data(i:sampleNum));
-%             end
-%             spikes_detected=[spikes_detected i+idx-1]; %record spike location
-%             interval=[interval;[i,i+after]]; % record spike interval
-%             detected = 0;
-%             hold_data = 0;
-%             update = update_time;
-%         end
-%     else
-%         detected = detected + 1;
-%         hold_data = hold_data + 1;
-%     end
-%     if(hold_data == hold_time)
-%         thr_buffer_mean = abs(round((thr_buffer_mean*64-thr_buffer(thr_buffer_end)+abs(aso))/64));
-%         thr_buffer(thr_buffer_end) = aso;
-%     else
-%         temp = thr_buffer_mean;
-%         thr_buffer_mean = abs(round((thr_buffer_mean*64-thr_buffer(thr_buffer_end)+thr_buffer_mean)/64));
-%         thr_buffer(thr_buffer_end) = temp;
-% 
-%     end
-%     if (thr_buffer_end == thr_buffer_length)
-%         thr_buffer_end = 1;
-%     else
-%         thr_buffer_end = thr_buffer_end + 1;
-%     end
     MEAN = [MEAN, mean_buffer_mean];
     DEMEAN = [ DEMEAN, demean];
     ASO = [ASO, aso];
@@ -292,6 +230,7 @@ Acc1 = length(TP)/(length(TP)+length(FN)+length(FP))
 % 
 % figure(5)
 visualisation(ASO,THR,FP,FN,TP,0)
+
 %         end
 %         j = j + 1
 %     end
